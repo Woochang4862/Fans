@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.example.jeong_woochang.fans"
         minSdkVersion 16
@@ -27,5 +27,8 @@ dependencies {
     compile group: 'net.htmlparser.jericho', name: 'jericho-html', version: '3.4'
     compile 'com.android.support:appcompat-v7:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.baoyz.pullrefreshlayout:library:1.2.0'
+    compile 'com.mxn.soul:flowingdrawer-core:2.0.0'
+    compile 'com.nineoldandroids:library:2.4.0'
     testCompile 'junit:junit:4.12'
 }

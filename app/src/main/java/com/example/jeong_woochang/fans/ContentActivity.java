@@ -1,21 +1,10 @@
 package com.example.jeong_woochang.fans;
 
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.TextView;
-
-import net.htmlparser.jericho.Element;
-import net.htmlparser.jericho.HTMLElementName;
-import net.htmlparser.jericho.Source;
-
-import java.net.URL;
-import java.util.List;
 
 public class ContentActivity extends AppCompatActivity {
 
@@ -37,6 +26,8 @@ public class ContentActivity extends AppCompatActivity {
         webView=(WebView)findViewById(R.id.webView);
         webView.setWebChromeClient(new WebChromeClient());
         webView.loadUrl(parsing_url);
+
+        finish();
     }
     //    Runnable runnable = new Runnable() {
 //        @Override
