@@ -104,7 +104,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 init();
+                parsing_url="https://fans.jype.com/BoardList?BoardName="+board_name+"&SearchField=&SearchQuery=&Page=";
+                pageView.setText("1");
                 adapter = getItem(parsing_url, adapter);
+                adapter.notifyDataSetChanged();
             }
         });
 
