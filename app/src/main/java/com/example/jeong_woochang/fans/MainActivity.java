@@ -43,6 +43,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,11 +68,11 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
     //ListView
     ListView menu;
     DrawerAdapter menu_list_adapter;
-    String board_name=null;
+    String board_name = null;
     DrawerLayout drawerLayout;
     Toolbar toolbar;
     ProgressBar progressBar;
-    private boolean lastItemVisibleFlag=false;
+    private boolean lastItemVisibleFlag = false;
     private boolean mLockListView = false;
 
     @Override
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             @Override
             public void onClick(View v) {
                 init();
-                parsing_url="https://fans.jype.com/BoardList?BoardName=&SearchField=&SearchQuery=&Page=";
+                parsing_url = "https://fans.jype.com/BoardList?BoardName=&SearchField=&SearchQuery=&Page=";
                 adapter.clear();
                 adapter.notifyDataSetChanged();
             }
@@ -123,57 +124,57 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         menu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch(position){
+                switch (position) {
                     case 0: //2PM
-                        board_name="2PM_Notice";
+                        board_name = "2PM_Notice";
                         setTitle("2PM");
                         break;
                     case 1: //GOT7
-                        board_name="GOT7_Notice";
+                        board_name = "GOT7_Notice";
                         setTitle("GOT7");
                         break;
                     case 2: //15&
-                        board_name="15and_notice";
+                        board_name = "15and_notice";
                         setTitle("15&");
                         break;
                     case 3: //missA
-                        board_name="missA_notice";
+                        board_name = "missA_notice";
                         setTitle("MissA");
                         break;
                     case 4: //Ayeon
-                        board_name="100ayeon_notice";
+                        board_name = "100ayeon_notice";
                         setTitle("Ayeon");
                         break;
                     case 5: //TWICE
-                        board_name="twice_notice";
+                        board_name = "twice_notice";
                         setTitle("TWICE");
                         break;
                     case 6: //Day6
-                        board_name="DAY6_Notice";
+                        board_name = "DAY6_Notice";
                         setTitle("Day6");
                         break;
                     case 7: //NakJoon
-                        board_name="Notice_NakJoon";
+                        board_name = "Notice_NakJoon";
                         setTitle("NakJoon");
                         break;
                     case 8: //J.Y.Park
-                        board_name="NOTICE_JYP";
+                        board_name = "NOTICE_JYP";
                         setTitle("J.Y.Park");
                         break;
                     case 9: //Wonder Girls
-                        board_name="WonderGirls_Notice";
+                        board_name = "WonderGirls_Notice";
                         setTitle("Wonder Girls");
                         break;
                     case 10: //Suzy
-                        board_name="NOTICE_SUZY";
+                        board_name = "NOTICE_SUZY";
                         setTitle("Suzy");
                         break;
                     case 11: //Somi
-                        board_name="Notice_Somi";
+                        board_name = "Notice_Somi";
                         setTitle("Somi");
                         break;
                     case 12: //StarKids
-                        board_name="NOTICE_SK";
+                        board_name = "NOTICE_SK";
                         setTitle("StarKids");
                         break;
                 }
@@ -191,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
     //초기화
     private void init() {
         //url 지정
-        parsing_url = "https://fans.jype.com/BoardList?BoardName="+board_name+"&SearchField=&SearchQuery=&Page=";
+        parsing_url = "https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField=&SearchQuery=&Page=";
 
         // Adapter 생성
         adapter = new ListViewAdapter();
@@ -210,26 +211,26 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         home = (ImageView) findViewById(R.id.home_btn);
 
         //menu로 쓰일 ListView 객체 지정
-        menu=(ListView)findViewById(R.id.drawer_menulist);
+        menu = (ListView) findViewById(R.id.drawer_menulist);
 
         //ProgressBar
-        progressBar=(ProgressBar)findViewById(R.id.progressbar);
+        progressBar = (ProgressBar) findViewById(R.id.progressbar);
         progressBar.setVisibility(View.GONE);
 
         //ListView에 들어갈 항목 추가 및 Adapter 생성
-        menu_list_adapter=new DrawerAdapter();
+        menu_list_adapter = new DrawerAdapter();
         new GetFanList().execute();
 
         //Adapter지정
         menu.setAdapter(menu_list_adapter);
 
-        drawerLayout=(DrawerLayout)findViewById(R.id.drawer);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
 
-        toolbar=(Toolbar)findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(
-                this,  mDrawerLayout, toolbar,
+                this, mDrawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close
         );
         mDrawerLayout.setDrawerListener(mDrawerToggle);
@@ -270,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                             if (TABLE_id.equalsIgnoreCase("MainContent_CenterContent_ctlBoardListPrivate")) {
 
                                 //TABLE태그의 id 값이 MainContent_CenterContent_ctlBoardListPrivate 인 Element에서 모든 TR태그를 가져옴
-                                    List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
+                                List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
 
                                 for (int j = 0; j < listTR.size(); j++) {
 
@@ -350,7 +351,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                     progressBar.setVisibility(View.GONE);
                     mLockListView = false;
                 }
-            },1000);
+            }, 1000);
         } catch (Exception e) {
 
         }
@@ -489,7 +490,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             System.out.println(parsing_url);
 
             // 다음 데이터를 불러온다.
-            adapter=getItem(parsing_url,adapter);
+            adapter = getItem(parsing_url, adapter);
         }
     }
 
@@ -498,12 +499,12 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         lastItemVisibleFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
     }
 
-    public class GetFanList extends AsyncTask<Void,Void,DrawerAdapter> {
+    public class GetFanList extends AsyncTask<Void, Void, DrawerAdapter> {
 
 
         @Override
         protected DrawerAdapter doInBackground(Void... voids) {
-            ArrayList<DrawerItem> list=new ArrayList<DrawerItem>();
+            ArrayList<DrawerItem> list = new ArrayList<DrawerItem>();
 
             try {
                 // 로그인 페이지 접속
@@ -511,29 +512,70 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         .timeout(3000)
                         .header("Origin", "https://fans.jype.com/")
                         .header("Referer", "https://fans.jype.com/Default")
-                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .header("Accept-Encoding", "gzip, deflate, br")
-                        .header("Accept-Language", "ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4")
+                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
                         .method(Connection.Method.GET)
                         .execute();
                 Map<String, String> loginTryCookie = loginPageResponse.cookies();
                 Document loginPageDocument = loginPageResponse.parse();
 
-                String ofp = loginPageDocument.select("input.ofp").val();
-                String nfp = loginPageDocument.select("input.nfp").val();
-                Connection.Response response = Jsoup.connect("https://fans.jype.com/MyFans")
+                String __VIEWSTATE = loginPageDocument.select("input.__VIEWSTATE").val();
+                String __VIEWSTATEGENERATOR = loginPageDocument.select("input.__VIEWSTATEGENERATOR").val();
+                String __EVENTVALIDATION = loginPageDocument.select("input.__EVENTVALIDATION").val();
+                // Window, Chrome의 User Agent.
+                String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
+
+                // 전송할 폼 데이터
+                Map<String, String> data = new HashMap<>();
+                data.put("__VIEWSTATE", __VIEWSTATE); // 로그인 페이지에서 얻은 토큰들
+                data.put("__VIEWSTATEGENERATOR", __VIEWSTATEGENERATOR);
+                data.put("__EVENTVALIDATION", __EVENTVALIDATION);
+                data.put("txtUserID", "chad76");
+                data.put("txtPassword", "164138");
+
+                // 로그인(POST)
+                Connection.Response response = Jsoup.connect("https://fans.jype.com/Default")
+                        .userAgent(userAgent)
+                        .timeout(3000)
+                        .header("Origin", "https://fans.jype.com/")
+                        .header("Referer", "https://fans.jype.com/Default")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Accept-Encoding", "gzip, deflate, br")
+                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
+                        .cookies(loginTryCookie)
+                        .data(data)
+                        .method(Connection.Method.POST)
+                        .execute();
+
+                // 로그인 성공 후 얻은 쿠키.
+                // 쿠키 중 TSESSION 이라는 값을 확인할 수 있다.
+                Map<String, String> loginCookie = response.cookies();
+
+
+                Connection.Response response1 = Jsoup.connect("https://fans.jype.com/MyFans")
+                        .userAgent(userAgent)
+                        .header("Origin", "https://fans.jype.com/")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Accept-Encoding", "gzip, deflate, br")
+                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
+                        .cookies(loginCookie)
                         .method(Connection.Method.GET)
                         .execute();
-                Document source= response.parse();
+
+
+                Document source = response.parse();
                 System.out.println(source.html());
-                Elements elements=source.select(".col-lg-6 #fanslist");
-                for(org.jsoup.nodes.Element element: elements){
-                    DrawerItem temp=new DrawerItem();
+                Elements elements = source.select(".col-lg-6 #fanslist");
+                for (org.jsoup.nodes.Element element : elements) {
+                    DrawerItem temp = new DrawerItem();
                     System.out.println(element);
-                    org.jsoup.nodes.Element element1=element.select("img[class=img-responsive center-block]").first();
+                    org.jsoup.nodes.Element element1 = element.select("img[class=img-responsive center-block]").first();
                     temp.setImg(element1.attr("src"));
-                    element1=element.select("img[class=img-responsive center-block]").first();
+                    element1 = element.select("img[class=img-responsive center-block]").first();
                     temp.setName(element1.attr("src"));
 
                     System.out.println(temp);
