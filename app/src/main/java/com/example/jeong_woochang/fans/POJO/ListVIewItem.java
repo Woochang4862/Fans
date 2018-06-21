@@ -1,4 +1,4 @@
-package com.example.jeong_woochang.fans;
+package com.example.jeong_woochang.fans.POJO;
 
 /**
  * Created by jeong-woochang on 2018. 1. 24..

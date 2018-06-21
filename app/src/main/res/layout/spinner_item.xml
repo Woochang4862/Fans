@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:ellipsize="marquee"
-    android:textColor="#aaa"
+    android:textColor="@color/colorWhite"
     android:textSize="20dp"
     android:text="text"
-    android:textStyle="bold"/>
+    android:textStyle="bold"
+    android:background="@color/colorPrimary"/>

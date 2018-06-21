@@ -12,7 +12,7 @@
         android:id="@+id/drawer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="9.2"
+        android:layout_weight="9.95"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -25,7 +25,8 @@
             <com.baoyz.widget.PullRefreshLayout
                 android:id="@+id/swipe"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_above="@id/progressbar">
 
                 <ListView
                     android:id="@+id/board"
@@ -33,6 +34,12 @@
                     android:layout_height="match_parent"></ListView>
 
             </com.baoyz.widget.PullRefreshLayout>
+
+            <ProgressBar
+                android:id="@+id/progressbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"/>
         </RelativeLayout>
 
         <ListView
@@ -40,9 +47,18 @@
             android:layout_width="200dp"
             android:layout_height="match_parent"
             android:layout_gravity="left"
-            android:background="#71c2fc"></ListView>
+            android:background="#fff"></ListView>
 
     </android.support.v4.widget.DrawerLayout>
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/colorPrimary"
+        android:layout_weight="0.05">
+    </android.support.v7.widget.Toolbar>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -58,34 +74,6 @@
             android:layout_weight="1"
             android:background="@color/colorPrimary"
             android:src="@drawable/ic_home_black_24dp" />
-
-        <TextView
-            android:id="@+id/page"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary"
-            android:gravity="center"
-            android:text="page"
-            android:textColor="#fff"
-            android:textSize="25dp"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/back_btn"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary"
-            android:src="@drawable/ic_arrow_back_black_24dp" />
-
-        <ImageView
-            android:id="@+id/forward_btn"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary"
-            android:src="@drawable/ic_arrow_forward_black_24dp" />
 
     </LinearLayout>
 

@@ -1,14 +1,17 @@
-package com.example.jeong_woochang.fans;
+package com.example.jeong_woochang.fans.Adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.example.jeong_woochang.fans.POJO.ListVIewItem;
+import com.example.jeong_woochang.fans.R;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by jeong-woochang on 2018. 1. 24..
@@ -20,7 +23,6 @@ public class ListViewAdapter extends BaseAdapter {
 
     // ListViewAdapter의 생성자
     public ListViewAdapter() {
-
     }
 
     // Adapter에 사용되는 데이터의 개수를 리턴. : 필수 구현

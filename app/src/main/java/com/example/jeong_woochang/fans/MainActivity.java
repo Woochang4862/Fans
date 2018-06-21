@@ -1,34 +1,52 @@
 package com.example.jeong_woochang.fans;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.support.v7.widget.SearchView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baoyz.widget.PullRefreshLayout;
+import com.example.jeong_woochang.fans.Adapter.DrawerAdapter;
+import com.example.jeong_woochang.fans.Adapter.ListViewAdapter;
+import com.example.jeong_woochang.fans.POJO.DrawerItem;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.Source;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AbsListView.OnScrollListener {
 
     //ListView 객체
     ListView board;
@@ -42,18 +60,19 @@ public class MainActivity extends AppCompatActivity {
     //String형 page 및 Integer형 page
     String page = "1";
     int page_int = 1;
-    //TextView 객체=>page
-    TextView pageView;
     //Refresh를 위한 객체
     PullRefreshLayout layout;
-    //Page 이동 및 Home버튼
-    ImageView back, forward, home;
+    //Home버튼
+    ImageView home;
     //ListView
     ListView menu;
-    ArrayList<String> menu_list;
-    ArrayAdapter menu_list_adapter;
+    DrawerAdapter menu_list_adapter;
     String board_name=null;
     DrawerLayout drawerLayout;
+    Toolbar toolbar;
+    ProgressBar progressBar;
+    private boolean lastItemVisibleFlag=false;
+    private boolean mLockListView = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,16 +84,7 @@ public class MainActivity extends AppCompatActivity {
         //내용을 한번 리스트뷰에 뿌려준다
         adapter = getItem(parsing_url, adapter);
 
-        //pageView를 터치시 페이지검색창으로 이동
-        pageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                page = (parsing_url.substring(parsing_url.indexOf("&Page=") + 6).equalsIgnoreCase("")) ? "1" : parsing_url.substring(parsing_url.indexOf("&Page=") + 6);
-                Intent intent = new Intent(MainActivity.this, InputPageActivity.class);
-                intent.putExtra("pageInfo", page);
-                startActivityForResult(intent, 1);
-            }
-        });
+        board.setOnScrollListener(this);
 
         //board의 position번째 아이템이 터치되었을 때 listHref에서 position번째 요소를 intent로 넘겨줌
         board.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -104,46 +114,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 init();
-                parsing_url="https://fans.jype.com/BoardList?BoardName="+board_name+"&SearchField=&SearchQuery=&Page=";
-                pageView.setText("1");
-                adapter = getItem(parsing_url, adapter);
+                parsing_url="https://fans.jype.com/BoardList?BoardName=&SearchField=&SearchQuery=&Page=";
+                adapter.clear();
                 adapter.notifyDataSetChanged();
-            }
-        });
-
-        //back_btn이 눌렸을때
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (page_int > 1) {
-                    page = (parsing_url.substring(parsing_url.indexOf("&Page=") + 6).equalsIgnoreCase("")) ? "1" : parsing_url.substring(parsing_url.indexOf("&Page=") + 6);
-                    page_int = Integer.parseInt(page) - 1;
-                    page = String.valueOf(page_int);
-                    pageView.setText(page);
-                    parsing_url = parsing_url.substring(0, parsing_url.indexOf("&Page=") + 6) + page;
-                    System.out.println(parsing_url);
-                    adapter = getItem(parsing_url, adapter);
-                    adapter.notifyDataSetChanged();
-                }
-            }
-        });
-
-        //forward_btn이 눌렸을 때
-        forward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    page = (parsing_url.substring(parsing_url.indexOf("&Page=") + 6).equalsIgnoreCase("")) ? "1" : parsing_url.substring(parsing_url.indexOf("&Page=") + 6);
-                    page_int = Integer.parseInt(page) + 1;
-                    page = String.valueOf(page_int);
-                    pageView.setText(page);
-                    parsing_url = parsing_url.substring(0, parsing_url.indexOf("&Page=") + 6) + page;
-                    System.out.println(parsing_url);
-                    adapter = getItem(parsing_url, adapter);
-                    adapter.notifyDataSetChanged();
-                } catch (Exception e) {
-                    Log.e("Error:::", e.getMessage());
-                }
             }
         });
 
@@ -153,42 +126,55 @@ public class MainActivity extends AppCompatActivity {
                 switch(position){
                     case 0: //2PM
                         board_name="2PM_Notice";
+                        setTitle("2PM");
                         break;
                     case 1: //GOT7
                         board_name="GOT7_Notice";
+                        setTitle("GOT7");
                         break;
                     case 2: //15&
                         board_name="15and_notice";
+                        setTitle("15&");
                         break;
                     case 3: //missA
                         board_name="missA_notice";
+                        setTitle("MissA");
                         break;
                     case 4: //Ayeon
                         board_name="100ayeon_notice";
+                        setTitle("Ayeon");
                         break;
                     case 5: //TWICE
                         board_name="twice_notice";
+                        setTitle("TWICE");
                         break;
                     case 6: //Day6
                         board_name="DAY6_Notice";
+                        setTitle("Day6");
                         break;
                     case 7: //NakJoon
                         board_name="Notice_NakJoon";
+                        setTitle("NakJoon");
                         break;
                     case 8: //J.Y.Park
                         board_name="NOTICE_JYP";
+                        setTitle("J.Y.Park");
                         break;
                     case 9: //Wonder Girls
                         board_name="WonderGirls_Notice";
+                        setTitle("Wonder Girls");
                         break;
                     case 10: //Suzy
                         board_name="NOTICE_SUZY";
+                        setTitle("Suzy");
                         break;
                     case 11: //Somi
                         board_name="Notice_Somi";
+                        setTitle("Somi");
                         break;
                     case 12: //StarKids
                         board_name="NOTICE_SK";
+                        setTitle("StarKids");
                         break;
                 }
                 init();
@@ -198,40 +184,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //리스트가 Drag되었을때를 감지하여
-//        board.setOnTouchListener(new View.OnTouchListener() {
-//            public float pressedX;
-//
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                float distance = 0;
-//
-//                switch(event.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//                        // 손가락을 touch 했을 떄 x 좌표값 저장
-//                        pressedX = event.getX();
-//                        break;
-//
-//                    case MotionEvent.ACTION_UP:
-//                        // 손가락을 떼었을 때 저장해놓은 x좌표와의 거리 비교
-//                        distance = pressedX - event.getX();
-//                        break;
-//                }
-//
-//                // 해당 거리가 100이 되지 않으면 이벤트 처리 하지 않는다.
-//                if (Math.abs(distance) < 30) {
-//                    return false;
-//                }
-//                if (distance > 0) {
-//                    // 손가락을 왼쪽으로 움직였으면 오른쪽 화면이 나타나야 한다.
-//
-//                } else {
-//                    // 손가락을 오른쪽으로 움직였으면 왼쪽 화면이 나타나야 한다.
-//                }
-//                return true;
-//            }
-//        });
-
+        FirebaseMessaging.getInstance().subscribeToTopic("news");
+        FirebaseInstanceId.getInstance().getToken();
     }
 
     //초기화
@@ -246,21 +200,11 @@ public class MainActivity extends AppCompatActivity {
         board = (ListView) findViewById(R.id.board);
         board.setAdapter(adapter);
 
-        //pageView 지정
-        pageView = (TextView) findViewById(R.id.page);
-
-        //pageView를 page기본값(1)으로 지정
-        pageView.setText(page);
-
         //추가 링크 정보를 담을 ArrayList 생성
         listHref = new ArrayList<String>();
 
         //Draw를 통한 Refresh를 하기 위한 객체 지정
         layout = (PullRefreshLayout) findViewById(R.id.swipe);
-
-        //페이지이동을 위한 ImageView지정
-        back = (ImageView) findViewById(R.id.back_btn);
-        forward = (ImageView) findViewById(R.id.forward_btn);
 
         //기본페이지로 이동을 위한 ImageView지정
         home = (ImageView) findViewById(R.id.home_btn);
@@ -268,59 +212,40 @@ public class MainActivity extends AppCompatActivity {
         //menu로 쓰일 ListView 객체 지정
         menu=(ListView)findViewById(R.id.drawer_menulist);
 
+        //ProgressBar
+        progressBar=(ProgressBar)findViewById(R.id.progressbar);
+        progressBar.setVisibility(View.GONE);
+
         //ListView에 들어갈 항목 추가 및 Adapter 생성
-        menu_list=new ArrayList<String>();
-        menu_list.add("2PM");
-        menu_list.add("GOT7");
-        menu_list.add("15&");
-        menu_list.add("missA");
-        menu_list.add("Ayeon");
-        menu_list.add("TWICE");
-        menu_list.add("DAY6");
-        menu_list.add("NakJoon");
-        menu_list.add("J.Y.Park");
-        menu_list.add("Wonder Girls");
-        menu_list.add("Suzy");
-        menu_list.add("Somi");
-        menu_list.add("StarKids");
-        menu_list_adapter=new ArrayAdapter(this,android.R.layout.simple_list_item_1,menu_list);
+        menu_list_adapter=new DrawerAdapter();
+        new GetFanList().execute();
 
         //Adapter지정
         menu.setAdapter(menu_list_adapter);
 
         drawerLayout=(DrawerLayout)findViewById(R.id.drawer);
 
-    }
-
-    //requestCode가 1이고 resultCode가 RESULT_OK intent로 시작되었을떄는 아래의 내용을 실행한다
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == 1) {
-            if (resultCode == RESULT_OK) {
-                String result = data.getStringExtra("pageInfo");
-                try {
-                    if (Integer.parseInt(result) > 0) {
-                        page = result;
-                        pageView.setText(page);
-                        parsing_url = parsing_url.substring(0, parsing_url.indexOf("&Page=") + 6) + page;
-                        adapter = getItem(parsing_url, adapter);
-                        adapter.notifyDataSetChanged();
-                    } else {
-                        Toast.makeText(this, "올바른 숫자를 입력해 주시기 바랍니다", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception e) {
-                    Toast.makeText(this, "올바른 숫자를 입력해 주시기 바랍니다", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
+        toolbar=(Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(
+                this,  mDrawerLayout, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        );
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        mDrawerToggle.syncState();
+        setTitle("");
+        mDrawerToggle.getDrawerArrowDrawable().setColor(getResources().getColor(R.color.colorWhite));
+        // Get the ActionBar here to configure the way it behaves.
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowCustomEnabled(true); //커스터마이징 하기 위해 필요
+        actionBar.setDisplayShowTitleEnabled(false);
     }
 
     //게시판 파싱
     private ListViewAdapter getItem(final String parsing_url, final ListViewAdapter adapter) {
-        adapter.clear();
-        listHref.clear();
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -331,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // date 가져오기
 
-                    // 모든 TABLE 태그를 가져와 리스트에 담음
+                    //모든 TABLE 태그를 가져와 리스트에 담음
                     List<Element> listTABLE = source.getAllElements(HTMLElementName.TABLE);
 
                     for (int i = 0; i < listTABLE.size(); i++) {
@@ -345,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
                             if (TABLE_id.equalsIgnoreCase("MainContent_CenterContent_ctlBoardListPrivate")) {
 
                                 //TABLE태그의 id 값이 MainContent_CenterContent_ctlBoardListPrivate 인 Element에서 모든 TR태그를 가져옴
-                                List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
+                                    List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
 
                                 for (int j = 0; j < listTR.size(); j++) {
 
@@ -418,6 +343,14 @@ public class MainActivity extends AppCompatActivity {
         try {
             thread.start();
             thread.join();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    adapter.notifyDataSetChanged();
+                    progressBar.setVisibility(View.GONE);
+                    mLockListView = false;
+                }
+            },1000);
         } catch (Exception e) {
 
         }
@@ -463,7 +396,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + query + "&Page=" + "1";
                 page = "1";
-                pageView.setText(page);
                 adapter = getItem(parsing_url, adapter);
                 adapter.notifyDataSetChanged();
                 search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -482,7 +414,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + query + "&Page=" + "1";
                         page = "1";
-                        pageView.setText(page);
                         adapter = getItem(parsing_url, adapter);
                         adapter.notifyDataSetChanged();
                     }
@@ -510,7 +441,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + newText + "&Page=" + "1";
                 page = "1";
-                pageView.setText(page);
                 adapter = getItem(parsing_url, adapter);
                 adapter.notifyDataSetChanged();
                 search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -529,7 +459,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + newText + "&Page=" + "1";
                         page = "1";
-                        pageView.setText(page);
                         adapter = getItem(parsing_url, adapter);
                         adapter.notifyDataSetChanged();
                     }
@@ -545,4 +474,92 @@ public class MainActivity extends AppCompatActivity {
         });
         return true;
     }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE && lastItemVisibleFlag && mLockListView == false) {
+            // 화면이 바닦에 닿을때 처리
+            // 로딩중을 알리는 프로그레스바를 보인다.
+            progressBar.setVisibility(View.VISIBLE);
+
+            page = (parsing_url.substring(parsing_url.indexOf("&Page=") + 6).equalsIgnoreCase("")) ? "1" : parsing_url.substring(parsing_url.indexOf("&Page=") + 6);
+            page_int = Integer.parseInt(page) + 1;
+            page = String.valueOf(page_int);
+            parsing_url = parsing_url.substring(0, parsing_url.indexOf("&Page=") + 6) + page;
+            System.out.println(parsing_url);
+
+            // 다음 데이터를 불러온다.
+            adapter=getItem(parsing_url,adapter);
+        }
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        lastItemVisibleFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
+    }
+
+    public class GetFanList extends AsyncTask<Void,Void,DrawerAdapter> {
+
+
+        @Override
+        protected DrawerAdapter doInBackground(Void... voids) {
+            ArrayList<DrawerItem> list=new ArrayList<DrawerItem>();
+
+            try {
+                // 로그인 페이지 접속
+                Connection.Response loginPageResponse = Jsoup.connect("https://fans.jype.com/Default")
+                        .timeout(3000)
+                        .header("Origin", "https://fans.jype.com/")
+                        .header("Referer", "https://fans.jype.com/Default")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Accept-Encoding", "gzip, deflate, br")
+                        .header("Accept-Language", "ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4")
+                        .method(Connection.Method.GET)
+                        .execute();
+                Map<String, String> loginTryCookie = loginPageResponse.cookies();
+                Document loginPageDocument = loginPageResponse.parse();
+
+                String ofp = loginPageDocument.select("input.ofp").val();
+                String nfp = loginPageDocument.select("input.nfp").val();
+                Connection.Response response = Jsoup.connect("https://fans.jype.com/MyFans")
+                        .method(Connection.Method.GET)
+                        .execute();
+                Document source= response.parse();
+                System.out.println(source.html());
+                Elements elements=source.select(".col-lg-6 #fanslist");
+                for(org.jsoup.nodes.Element element: elements){
+                    DrawerItem temp=new DrawerItem();
+                    System.out.println(element);
+                    org.jsoup.nodes.Element element1=element.select("img[class=img-responsive center-block]").first();
+                    temp.setImg(element1.attr("src"));
+                    element1=element.select("img[class=img-responsive center-block]").first();
+                    temp.setName(element1.attr("src"));
+
+                    System.out.println(temp);
+
+                    menu_list_adapter.addItem(temp);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return menu_list_adapter;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(DrawerAdapter drawerAdapter) {
+            super.onPostExecute(drawerAdapter);
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+    }
+
 }
