@@ -1,8 +1,6 @@
 package com.example.jeong_woochang.fans;
 
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,7 +14,6 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.support.v7.widget.SearchView;
 import android.widget.ProgressBar;
@@ -26,26 +23,13 @@ import android.widget.Toast;
 import com.baoyz.widget.PullRefreshLayout;
 import com.example.jeong_woochang.fans.Adapter.DrawerAdapter;
 import com.example.jeong_woochang.fans.Adapter.ListViewAdapter;
-import com.example.jeong_woochang.fans.POJO.DrawerItem;
+import com.example.jeong_woochang.fans.Method.GetBoard;
+import com.example.jeong_woochang.fans.Method.GetFanList;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 
-import net.htmlparser.jericho.Element;
-import net.htmlparser.jericho.HTMLElementName;
-import net.htmlparser.jericho.Source;
-
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements AbsListView.OnScrollListener {
 
@@ -67,8 +51,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
     String page = "1";
     private String search_query="";
     private String search_field="";
-    ArrayList<String> tempname=new ArrayList<>();
-    ArrayList<String> tempimg=new ArrayList<>();
+    //Method Class
     GetBoard gb=new GetBoard();
 
     @Override
@@ -162,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         setTitle("StarKids");
                         break;
                 }
+                adapter.clear();
                 adapter=gb.getItem(MainActivity.this, adapter, board_name, page,search_query,search_field);
                 drawerLayout.closeDrawer(Gravity.LEFT);
                 adapter.notifyDataSetChanged();
@@ -180,7 +164,13 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         //ListView에 들어갈 항목 추가 및 Adapter 생성
         menu_list_adapter = new DrawerAdapter();
         menu_list_adapter.clear();
-        new GetFanList().execute();
+        try {
+            menu_list_adapter=new GetFanList().execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
         //menu_list_adapter.addItem("https://jypfanscdn.azureedge.net/portal/dance-the-night-away_fan's_398x285.jpg","https://jypfanscdn.azureedge.net/portal/TW_fans-title(1).jpg");
         menu_list_adapter.notifyDataSetChanged();
 
@@ -258,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         search_field = "Name";
                 }
                 page = "1";
+                adapter.clear();
                 adapter = gb.getItem(MainActivity.this, adapter,board_name,page,query,search_field);
                 adapter.notifyDataSetChanged();
                 search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -275,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                                 search_field = "Name";
                         }
                         page = "1";
+                        adapter.clear();
                         adapter = gb.getItem(MainActivity.this, adapter,board_name,page,query,search_field);
                         adapter.notifyDataSetChanged();
                     }
@@ -284,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         Toast.makeText(MainActivity.this, "올바른 유형을 선택해주세요", Toast.LENGTH_SHORT);
                     }
                 });
-                return false;
+                return true;
             }
 
             @Override
@@ -302,6 +294,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             // 로딩중을 알리는 프로그레스바를 보인다.
             progressBar.setVisibility(View.VISIBLE);
 
+            board.setOverScrollMode(ListView.OVER_SCROLL_NEVER);
+
             page = String.valueOf(Integer.parseInt(page)+1);
 
             // 다음 데이터를 불러온다.
@@ -313,119 +307,6 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         lastItemVisibleFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
-    }
-
-    public class GetFanList extends AsyncTask<Void, Void, Void> {
-
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-
-            try {
-                // 로그인 페이지 접속
-                Connection.Response loginPageResponse = Jsoup.connect("https://fans.jype.com/Default")
-                        .timeout(3000)
-                        .header("Origin", "https://fans.jype.com/")
-                        .header("Referer", "https://fans.jype.com/Default")
-                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .header("Accept-Encoding", "gzip, deflate, br")
-                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                        .method(Connection.Method.GET)
-                        .execute();
-
-                Document loginPageDocument = loginPageResponse.parse();
-
-                //Form Data for Token
-                String __LASTFOCUS = loginPageDocument.select("#__LASTFOCUS").val();
-                String __EVENTTARGET = loginPageDocument.select("#__EVENTTARGET").val();
-                String __EVENTARGUMENT = loginPageDocument.select("#__EVENTARGUMENT").val();
-                String __VIEWSTATE = loginPageDocument.select("#__VIEWSTATE").val();
-                String __VIEWSTATEGENERATOR = loginPageDocument.select("#__VIEWSTATEGENERATOR").val();
-                String __EVENTVALIDATION = loginPageDocument.select("#__EVENTVALIDATION").val();
-
-                // Window, Chrome의 User Agent.
-                String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
-
-                // 전송할 폼 데이터
-                Map<String, String> data = new HashMap<>();
-                data.put("__LASTFOCUS", __LASTFOCUS);
-                data.put("__EVENTTARGET", __EVENTTARGET);
-                data.put("__EVENTARGUMENT", __EVENTARGUMENT);
-                data.put("__VIEWSTATE", __VIEWSTATE); // 로그인 페이지에서 얻은 토큰들
-                data.put("__VIEWSTATEGENERATOR", __VIEWSTATEGENERATOR);
-                data.put("__EVENTVALIDATION", __EVENTVALIDATION);
-                data.put("txtUserID", "chad76");
-                data.put("txtPassword", "164138");
-                data.put("btnLogin", "LOGIN");
-
-
-                System.out.println(data);
-
-                Connection.Response loginPageResponse_for_cookies = Jsoup.connect("https://fans.jype.com/Default")
-                        .timeout(3000)
-                        .header("Origin", "https://fans.jype.com/")
-                        .header("Referer", "https://fans.jype.com/Default")
-                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .header("Accept-Encoding", "gzip, deflate, br")
-                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                        .userAgent(userAgent)
-                        .data(data)
-                        .method(Connection.Method.POST)
-                        .execute();
-
-                // 로그인 성공 후 얻은 쿠키.
-                Map<String, String> loginTryCookie = loginPageResponse_for_cookies.cookies();
-
-                Connection.Response response = Jsoup.connect("https://fans.jype.com/MyFans")
-                        .userAgent(userAgent)
-                        .header("Origin", "https://fans.jype.com/")
-                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .header("Accept-Encoding", "gzip, deflate, br")
-                        .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                        .cookies(loginTryCookie)
-                        .method(Connection.Method.GET)
-                        .execute();
-
-
-                Document source = response.parse();
-                Elements elements = source.select(".col-lg-6");
-                for (org.jsoup.nodes.Element element : elements) {
-                    org.jsoup.nodes.Element element1 = element.select("img[class=img-responsive center-block]").first();
-                    String name= element1.attr("src");
-                    element1 = element.select("img[class=img-responsive center-block]").get(1);
-                    String img = element1.attr("src");
-                    //System.out.println(img+"\t"+name);
-                    tempname.add(name);
-                    tempimg.add(img);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            System.out.println("SIZE:"+tempimg.size());
-            for(int i=0;i<tempname.size();i++) {
-                menu_list_adapter.addItem(tempname.get(i), tempimg.get(i));
-            }
-            menu_list_adapter.notifyDataSetChanged();
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
-        }
     }
 
     public void setmLockListView(boolean mLockListView) {

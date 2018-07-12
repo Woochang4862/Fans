@@ -1,4 +1,4 @@
-package com.example.jeong_woochang.fans;
+package com.example.jeong_woochang.fans.Method;
 
 import android.app.Activity;
 import android.app.MediaRouteButton;
@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 
 import com.example.jeong_woochang.fans.Adapter.ListViewAdapter;
+import com.example.jeong_woochang.fans.MainActivity;
+import com.example.jeong_woochang.fans.R;
 
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
@@ -36,6 +38,7 @@ public class GetBoard {
                 Source source;
                 try {
                     String parsing_url="https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField="+search_field+"&SearchQuery="+search_query+"&Page="+page;
+                    System.out.println(parsing_url);
                     URL url = new URL(parsing_url);
                     source = new Source(url);
 
