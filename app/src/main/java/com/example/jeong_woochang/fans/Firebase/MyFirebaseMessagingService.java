@@ -1,4 +1,4 @@
-package com.example.jeong_woochang.fans;
+package com.example.jeong_woochang.fans.Firebase;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.app.NotificationCompat;
 
+import com.example.jeong_woochang.fans.MainActivity;
+import com.example.jeong_woochang.fans.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 

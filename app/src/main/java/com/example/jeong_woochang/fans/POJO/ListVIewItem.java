@@ -10,6 +10,7 @@ public class ListVIewItem {
     private String name;
     private String date;
     private String view;
+    private String href;
 
     public void setNum(String num) {
         this.num = num;
@@ -31,6 +32,10 @@ public class ListVIewItem {
         this.view = view;
     }
 
+    public void setHref(String href) {
+        this.href = href;
+    }
+
     public String getNum() { return num; }
 
     public String getTitle() {
@@ -47,5 +52,9 @@ public class ListVIewItem {
 
     public String getView() {
         return view;
+    }
+
+    public String getHref() {
+        return href;
     }
 }

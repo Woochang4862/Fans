@@ -7,16 +7,13 @@
     <ImageView
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:scaleX="70"
-        android:scaleY="70"
-        android:id="@+id/group_img"/>
-
+        android:text="NAME"
+        android:textSize="20dp"
+        android:layout_gravity="left"
+        android:id="@+id/name"></ImageView>
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="NAME"
-        android:textSize="20dp"
-        android:gravity="center_vertical"
-        android:id="@+id/name"></ImageView>
-
+        android:id="@+id/group_img"
+        android:layout_gravity="left"/>
 </LinearLayout>

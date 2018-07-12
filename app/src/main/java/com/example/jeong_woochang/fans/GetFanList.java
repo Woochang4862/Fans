@@ -25,7 +25,7 @@ public class GetFanList extends AsyncTask<Void,Void,DrawerAdapter> {
     @Override
     protected DrawerAdapter doInBackground(Void... voids) {
         DrawerAdapter adapter=new DrawerAdapter();
-        ArrayList<DrawerItem> list=new ArrayList<DrawerItem>();
+        /*ArrayList<DrawerItem> list=new ArrayList<DrawerItem>();
 
         try {
             Document source= Jsoup.connect("https://fans.jype.com/MyFans").get();
@@ -42,7 +42,7 @@ public class GetFanList extends AsyncTask<Void,Void,DrawerAdapter> {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
         return adapter;
     }
 

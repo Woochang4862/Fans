@@ -19,7 +19,7 @@ import java.util.List;
 
 public class ListViewAdapter extends BaseAdapter {
     //Adapter에 추가된 데이터를 저장하기 위한 ArrayList
-    private ArrayList<ListVIewItem> listViewItems=new ArrayList<ListVIewItem>();
+    public ArrayList<ListVIewItem> listViewItems=new ArrayList<ListVIewItem>();
 
     // ListViewAdapter의 생성자
     public ListViewAdapter() {
@@ -77,7 +77,7 @@ public class ListViewAdapter extends BaseAdapter {
 
 
     // 아이템 데이터 추가를 위한 함수. 개발자가 원하는대로 작성 가능.
-    public void addItem(String num, String title, String name, String date, String view) {
+    public void addItem(String num, String title, String name, String date, String view, String href) {
         ListVIewItem item = new ListVIewItem();
 
         item.setNum(num);
@@ -85,6 +85,7 @@ public class ListViewAdapter extends BaseAdapter {
         item.setName(name);
         item.setDate(date);
         item.setView(view);
+        item.setHref(href);
 
         listViewItems.add(item);
     }

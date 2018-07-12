@@ -21,7 +21,6 @@ import android.widget.ListView;
 import android.support.v7.widget.SearchView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baoyz.widget.PullRefreshLayout;
@@ -46,34 +45,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements AbsListView.OnScrollListener {
 
     //ListView 객체
-    ListView board;
+    ListView board, menu;
     //list와 listview를 연결할 Adapter
     ListViewAdapter adapter;
-    //파싱한 정보를 받을 String 변수
-    String num = "num", title = "title", name = "name", date = "date", view = "view", href = "href";
-    ArrayList<String> listHref;
-    //파싱할 URL
-    String parsing_url;
-    //String형 page 및 Integer형 page
-    String page = "1";
-    int page_int = 1;
-    //Refresh를 위한 객체
-    PullRefreshLayout layout;
-    //Home버튼
-    ImageView home;
-    //ListView
-    ListView menu;
     DrawerAdapter menu_list_adapter;
-    String board_name = null;
-    DrawerLayout drawerLayout;
-    Toolbar toolbar;
     ProgressBar progressBar;
     private boolean lastItemVisibleFlag = false;
-    private boolean mLockListView = false;
+    public boolean mLockListView = false;
+    //Refresh를 위한 객체
+    PullRefreshLayout layout;
+    //Toolbar
+    DrawerLayout drawerLayout;
+    Toolbar toolbar;
+    //URL 파라미터
+    String board_name = null;
+    String page = "1";
+    private String search_query="";
+    private String search_field="";
+    ArrayList<String> tempname=new ArrayList<>();
+    ArrayList<String> tempimg=new ArrayList<>();
+    GetBoard gb=new GetBoard();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +77,6 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         setContentView(R.layout.activity_main);
 
         init();
-
-        //내용을 한번 리스트뷰에 뿌려준다
-        adapter = getItem(parsing_url, adapter);
 
         board.setOnScrollListener(this);
 
@@ -93,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 try {
                     Intent intent = new Intent(MainActivity.this, ContentActivity.class);
-                    intent.putExtra("href", listHref.get(position));
+                    intent.putExtra("href", adapter.listViewItems.get(position).getHref());
                     startActivity(intent);
                 } catch (Exception e) {
                     Log.d("ERROR ::::", e.getMessage());
@@ -111,17 +104,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             }
         });
 
-        home.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                init();
-                parsing_url = "https://fans.jype.com/BoardList?BoardName=&SearchField=&SearchQuery=&Page=";
-                adapter.clear();
-                adapter.notifyDataSetChanged();
-            }
-        });
-
         menu.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
@@ -178,62 +162,52 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         setTitle("StarKids");
                         break;
                 }
-                init();
-                getItem(parsing_url, adapter);
+                adapter=gb.getItem(MainActivity.this, adapter, board_name, page,search_query,search_field);
                 drawerLayout.closeDrawer(Gravity.LEFT);
                 adapter.notifyDataSetChanged();
             }
         });
-
         FirebaseMessaging.getInstance().subscribeToTopic("news");
         FirebaseInstanceId.getInstance().getToken();
     }
 
     //초기화
-    private void init() {
-        //url 지정
-        parsing_url = "https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField=&SearchQuery=&Page=";
+    private void init(){
 
         // Adapter 생성
         adapter = new ListViewAdapter();
+
+        //ListView에 들어갈 항목 추가 및 Adapter 생성
+        menu_list_adapter = new DrawerAdapter();
+        menu_list_adapter.clear();
+        new GetFanList().execute();
+        //menu_list_adapter.addItem("https://jypfanscdn.azureedge.net/portal/dance-the-night-away_fan's_398x285.jpg","https://jypfanscdn.azureedge.net/portal/TW_fans-title(1).jpg");
+        menu_list_adapter.notifyDataSetChanged();
 
         // 리스트뷰 참조 및 Adapter달기
         board = (ListView) findViewById(R.id.board);
         board.setAdapter(adapter);
 
-        //추가 링크 정보를 담을 ArrayList 생성
-        listHref = new ArrayList<String>();
-
-        //Draw를 통한 Refresh를 하기 위한 객체 지정
-        layout = (PullRefreshLayout) findViewById(R.id.swipe);
-
-        //기본페이지로 이동을 위한 ImageView지정
-        home = (ImageView) findViewById(R.id.home_btn);
-
         //menu로 쓰일 ListView 객체 지정
         menu = (ListView) findViewById(R.id.drawer_menulist);
+        menu.setAdapter(menu_list_adapter);
+
+        //Pulling을 통해 Refresh를 하기 위한 객체 지정
+        layout = (PullRefreshLayout) findViewById(R.id.swipe);
 
         //ProgressBar
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
         progressBar.setVisibility(View.GONE);
 
-        //ListView에 들어갈 항목 추가 및 Adapter 생성
-        menu_list_adapter = new DrawerAdapter();
-        new GetFanList().execute();
-
-        //Adapter지정
-        menu.setAdapter(menu_list_adapter);
-
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
-
+        //toolbar *start{
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(
-                this, mDrawerLayout, toolbar,
+                this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close
         );
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        drawerLayout.setDrawerListener(mDrawerToggle);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         mDrawerToggle.syncState();
@@ -243,119 +217,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowCustomEnabled(true); //커스터마이징 하기 위해 필요
         actionBar.setDisplayShowTitleEnabled(false);
-    }
-
-    //게시판 파싱
-    private ListViewAdapter getItem(final String parsing_url, final ListViewAdapter adapter) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                Source source;
-                try {
-                    URL url = new URL(parsing_url);
-                    source = new Source(url);
-
-                    // date 가져오기
-
-                    //모든 TABLE 태그를 가져와 리스트에 담음
-                    List<Element> listTABLE = source.getAllElements(HTMLElementName.TABLE);
-
-                    for (int i = 0; i < listTABLE.size(); i++) {
-                        Element TABLE = listTABLE.get(i);
-
-                        // TABLE태그의 id 값을 가져옴
-                        String TABLE_id = TABLE.getAttributeValue("id");
-                        if (TABLE_id != null) {
-
-                            // id 값이 MainContent_CenterContent_ctlBoardListPrivate 이면
-                            if (TABLE_id.equalsIgnoreCase("MainContent_CenterContent_ctlBoardListPrivate")) {
-
-                                //TABLE태그의 id 값이 MainContent_CenterContent_ctlBoardListPrivate 인 Element에서 모든 TR태그를 가져옴
-                                List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
-
-                                for (int j = 0; j < listTR.size(); j++) {
-
-                                    //모든 TR태크 중에서 j 번째 TR 태그를 가져옴
-                                    Element TR = listTR.get(j);
-
-                                    //j번째 TR태그에서 모든 TD태그를 가져옴
-                                    List<Element> listTD = TR.getAllElements(HTMLElementName.TD);
-
-                                    for (int l = 0; l < listTD.size(); l++) {
-
-                                        // 모근 TD태그 중에서 l 번째 TD 태그를 가져옴
-                                        Element TD = listTD.get(l);
-
-                                        //num title name date view 순으로 되있으므로 l값에 따라 값을 저장
-                                        switch (l) {
-                                            case 0:
-                                                num = TD.getTextExtractor().toString();
-                                                break;
-                                            case 1:
-                                                List<Element> listA = TD.getAllElements(HTMLElementName.A);
-                                                Element A = listA.get(0);
-                                                href = A.getAttributeValue("href");
-                                                title = TD.getTextExtractor().toString();
-                                                break;
-                                            case 2:
-                                                name = TD.getTextExtractor().toString();
-                                                break;
-                                            case 3:
-                                                date = TD.getTextExtractor().toString();
-                                                break;
-                                            case 4:
-                                                view = TD.getTextExtractor().toString();
-                                                break;
-                                        }
-                                    }
-                                    //공백을 없애줌
-                                    // num 가공
-                                    num = num.replace("\n" +
-                                            "                                        ", "");
-                                    num = num.replace("\n" +
-                                            "                                    ", "");
-                                    //name 가공
-                                    name = name.replace("\n" +
-                                            "                                        ", "");
-                                    name = name.replace("\n" +
-                                            "                                    ", "");
-                                    //date 가공
-                                    date = date.replace("\n" +
-                                            "                                        ", "");
-                                    date = date.replace("\n" +
-                                            "                                    ", "");
-
-                                    //아이템 추가
-                                    adapter.addItem(num, title, name, date, view);
-
-                                    listHref.add(href);
-                                }
-                            }
-                        }
-                    }
-
-                } catch (Exception e) {
-                    Log.d("error :::: ", e.getMessage());
-                }
-            }
-        };
-
-        Thread thread = new Thread(runnable);
-        try {
-            thread.start();
-            thread.join();
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    adapter.notifyDataSetChanged();
-                    progressBar.setVisibility(View.GONE);
-                    mLockListView = false;
-                }
-            }, 1000);
-        } catch (Exception e) {
-
-        }
-        return adapter;
+        //}end*
     }
 
     //OptionMenu를 만든다
@@ -395,9 +257,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                     case "닉네임":
                         search_field = "Name";
                 }
-                parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + query + "&Page=" + "1";
                 page = "1";
-                adapter = getItem(parsing_url, adapter);
+                adapter = gb.getItem(MainActivity.this, adapter,board_name,page,query,search_field);
                 adapter.notifyDataSetChanged();
                 search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
@@ -413,9 +274,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                             case "닉네임":
                                 search_field = "Name";
                         }
-                        parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + query + "&Page=" + "1";
                         page = "1";
-                        adapter = getItem(parsing_url, adapter);
+                        adapter = gb.getItem(MainActivity.this, adapter,board_name,page,query,search_field);
                         adapter.notifyDataSetChanged();
                     }
 
@@ -429,49 +289,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
 
             @Override
             public boolean onQueryTextChange(final String newText) {
-                String search_field = null;
-                switch (search_type_spinner.getSelectedItem().toString()) {
-                    case "제목":
-                        search_field = "Title";
-                        break;
-                    case "내용":
-                        search_field = "Content";
-                        break;
-                    case "닉네임":
-                        search_field = "Name";
-                }
-                parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + newText + "&Page=" + "1";
-                page = "1";
-                adapter = getItem(parsing_url, adapter);
-                adapter.notifyDataSetChanged();
-                search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        String search_field = null;
-                        switch (search_type_spinner.getSelectedItem().toString()) {
-                            case "제목":
-                                search_field = "Title";
-                                break;
-                            case "내용":
-                                search_field = "Content";
-                                break;
-                            case "닉네임":
-                                search_field = "Name";
-                        }
-                        parsing_url = parsing_url.substring(0, parsing_url.indexOf("&SearchField=") + 13) + search_field + "&SearchQuery=" + newText + "&Page=" + "1";
-                        page = "1";
-                        adapter = getItem(parsing_url, adapter);
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-                        Toast.makeText(MainActivity.this, "올바른 유형을 선택해주세요", Toast.LENGTH_SHORT);
-                    }
-                });
                 return false;
             }
-
         });
         return true;
     }
@@ -483,14 +302,11 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             // 로딩중을 알리는 프로그레스바를 보인다.
             progressBar.setVisibility(View.VISIBLE);
 
-            page = (parsing_url.substring(parsing_url.indexOf("&Page=") + 6).equalsIgnoreCase("")) ? "1" : parsing_url.substring(parsing_url.indexOf("&Page=") + 6);
-            page_int = Integer.parseInt(page) + 1;
-            page = String.valueOf(page_int);
-            parsing_url = parsing_url.substring(0, parsing_url.indexOf("&Page=") + 6) + page;
-            System.out.println(parsing_url);
+            page = String.valueOf(Integer.parseInt(page)+1);
 
             // 다음 데이터를 불러온다.
-            adapter = getItem(parsing_url, adapter);
+            adapter = gb.getItem(MainActivity.this, adapter,board_name,page,search_query,search_field);
+            adapter.notifyDataSetChanged();
         }
     }
 
@@ -499,12 +315,11 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         lastItemVisibleFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
     }
 
-    public class GetFanList extends AsyncTask<Void, Void, DrawerAdapter> {
+    public class GetFanList extends AsyncTask<Void, Void, Void> {
 
 
         @Override
-        protected DrawerAdapter doInBackground(Void... voids) {
-            ArrayList<DrawerItem> list = new ArrayList<DrawerItem>();
+        protected Void doInBackground(Void... voids) {
 
             try {
                 // 로그인 페이지 접속
@@ -518,26 +333,36 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
                         .method(Connection.Method.GET)
                         .execute();
-                Map<String, String> loginTryCookie = loginPageResponse.cookies();
+
                 Document loginPageDocument = loginPageResponse.parse();
 
-                String __VIEWSTATE = loginPageDocument.select("input.__VIEWSTATE").val();
-                String __VIEWSTATEGENERATOR = loginPageDocument.select("input.__VIEWSTATEGENERATOR").val();
-                String __EVENTVALIDATION = loginPageDocument.select("input.__EVENTVALIDATION").val();
+                //Form Data for Token
+                String __LASTFOCUS = loginPageDocument.select("#__LASTFOCUS").val();
+                String __EVENTTARGET = loginPageDocument.select("#__EVENTTARGET").val();
+                String __EVENTARGUMENT = loginPageDocument.select("#__EVENTARGUMENT").val();
+                String __VIEWSTATE = loginPageDocument.select("#__VIEWSTATE").val();
+                String __VIEWSTATEGENERATOR = loginPageDocument.select("#__VIEWSTATEGENERATOR").val();
+                String __EVENTVALIDATION = loginPageDocument.select("#__EVENTVALIDATION").val();
+
                 // Window, Chrome의 User Agent.
                 String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
 
                 // 전송할 폼 데이터
                 Map<String, String> data = new HashMap<>();
+                data.put("__LASTFOCUS", __LASTFOCUS);
+                data.put("__EVENTTARGET", __EVENTTARGET);
+                data.put("__EVENTARGUMENT", __EVENTARGUMENT);
                 data.put("__VIEWSTATE", __VIEWSTATE); // 로그인 페이지에서 얻은 토큰들
                 data.put("__VIEWSTATEGENERATOR", __VIEWSTATEGENERATOR);
                 data.put("__EVENTVALIDATION", __EVENTVALIDATION);
                 data.put("txtUserID", "chad76");
                 data.put("txtPassword", "164138");
+                data.put("btnLogin", "LOGIN");
 
-                // 로그인(POST)
-                Connection.Response response = Jsoup.connect("https://fans.jype.com/Default")
-                        .userAgent(userAgent)
+
+                System.out.println(data);
+
+                Connection.Response loginPageResponse_for_cookies = Jsoup.connect("https://fans.jype.com/Default")
                         .timeout(3000)
                         .header("Origin", "https://fans.jype.com/")
                         .header("Referer", "https://fans.jype.com/Default")
@@ -545,47 +370,42 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .header("Accept-Encoding", "gzip, deflate, br")
                         .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                        .cookies(loginTryCookie)
+                        .userAgent(userAgent)
                         .data(data)
                         .method(Connection.Method.POST)
                         .execute();
 
                 // 로그인 성공 후 얻은 쿠키.
-                // 쿠키 중 TSESSION 이라는 값을 확인할 수 있다.
-                Map<String, String> loginCookie = response.cookies();
+                Map<String, String> loginTryCookie = loginPageResponse_for_cookies.cookies();
 
-
-                Connection.Response response1 = Jsoup.connect("https://fans.jype.com/MyFans")
+                Connection.Response response = Jsoup.connect("https://fans.jype.com/MyFans")
                         .userAgent(userAgent)
                         .header("Origin", "https://fans.jype.com/")
                         .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .header("Accept-Encoding", "gzip, deflate, br")
                         .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                        .cookies(loginCookie)
+                        .cookies(loginTryCookie)
                         .method(Connection.Method.GET)
                         .execute();
 
 
                 Document source = response.parse();
-                System.out.println(source.html());
-                Elements elements = source.select(".col-lg-6 #fanslist");
+                Elements elements = source.select(".col-lg-6");
                 for (org.jsoup.nodes.Element element : elements) {
-                    DrawerItem temp = new DrawerItem();
-                    System.out.println(element);
                     org.jsoup.nodes.Element element1 = element.select("img[class=img-responsive center-block]").first();
-                    temp.setImg(element1.attr("src"));
-                    element1 = element.select("img[class=img-responsive center-block]").first();
-                    temp.setName(element1.attr("src"));
-
-                    System.out.println(temp);
-
-                    menu_list_adapter.addItem(temp);
+                    String name= element1.attr("src");
+                    element1 = element.select("img[class=img-responsive center-block]").get(1);
+                    String img = element1.attr("src");
+                    //System.out.println(img+"\t"+name);
+                    tempname.add(name);
+                    tempimg.add(img);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return menu_list_adapter;
+
+            return null;
         }
 
         @Override
@@ -594,8 +414,12 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         }
 
         @Override
-        protected void onPostExecute(DrawerAdapter drawerAdapter) {
-            super.onPostExecute(drawerAdapter);
+        protected void onPostExecute(Void aVoid) {
+            System.out.println("SIZE:"+tempimg.size());
+            for(int i=0;i<tempname.size();i++) {
+                menu_list_adapter.addItem(tempname.get(i), tempimg.get(i));
+            }
+            menu_list_adapter.notifyDataSetChanged();
         }
 
         @Override
@@ -604,4 +428,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         }
     }
 
+    public void setmLockListView(boolean mLockListView) {
+        this.mLockListView = mLockListView;
+    }
 }
