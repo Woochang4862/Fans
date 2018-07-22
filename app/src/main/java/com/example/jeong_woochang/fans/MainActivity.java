@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //초기화
         init();
 
         board.setOnScrollListener(this);

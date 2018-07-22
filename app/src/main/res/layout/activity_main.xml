@@ -8,6 +8,16 @@
     android:weightSum="10"
     tools:context="com.example.jeong_woochang.fans.MainActivity">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/colorPrimary"
+        android:layout_weight="0.05"
+        android:elevation="50dp">
+    </android.support.v7.widget.Toolbar>
+
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer"
         android:layout_width="match_parent"
@@ -51,16 +61,7 @@
 
     </android.support.v4.widget.DrawerLayout>
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/colorPrimary"
-        android:layout_weight="0.05">
-    </android.support.v7.widget.Toolbar>
-
-    <LinearLayout
+    <!--<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.8"
@@ -75,6 +76,6 @@
             android:background="@color/colorPrimary"
             android:src="@drawable/ic_home_black_24dp" />
 
-    </LinearLayout>
+    </LinearLayout>-->
 
 </LinearLayout>
