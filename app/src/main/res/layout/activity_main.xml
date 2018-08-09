@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:weightSum="10"
     tools:context="com.example.jeong_woochang.fans.MainActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/colorPrimary"
-        android:layout_weight="0.05"
-        android:elevation="50dp">
+        android:layout_height="60dp"
+        android:background="@drawable/rounded"
+        android:layout_margin="10dp"
+        android:elevation="5dp">
     </android.support.v7.widget.Toolbar>
 
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/drawer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="9.95"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent"
+        android:layout_marginTop="60dp"
+        android:elevation="0dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -41,7 +36,8 @@
                 <ListView
                     android:id="@+id/board"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"></ListView>
+                    android:layout_height="match_parent"
+                    android:divider="@null"></ListView>
 
             </com.baoyz.widget.PullRefreshLayout>
 
@@ -61,21 +57,38 @@
 
     </android.support.v4.widget.DrawerLayout>
 
-    <!--<LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.8"
-        android:orientation="horizontal"
-        android:weightSum="4">
+    <com.github.clans.fab.FloatingActionMenu
+        android:id="@+id/fam"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="10dp"
+        app:menu_colorNormal="#303F9F"
+        app:menu_colorPressed="#4C68FF"
+        app:menu_colorRipple="#4C68FF"
+        app:menu_openDirection="up"
+        tools:ignore="RtlHardcoded">
 
-        <ImageView
-            android:id="@+id/home_btn"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@color/colorPrimary"
-            android:src="@drawable/ic_home_black_24dp" />
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/noti"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_add_alert"
+            app:fab_colorNormal="@color/colorAccent"
+            app:fab_colorPressed="@color/colorPrimaryDark"
+            app:fab_colorRipple="@color/colorAccent"
+            app:fab_label="Star" />
 
-    </LinearLayout>-->
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/star"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_star"
+            app:fab_colorNormal="@color/colorAccent"
+            app:fab_colorPressed="@color/colorPrimaryDark"
+            app:fab_colorRipple="@color/colorAccent"
+            app:fab_label="Star" />
 
-</LinearLayout>
+    </com.github.clans.fab.FloatingActionMenu>
+
+</FrameLayout>
