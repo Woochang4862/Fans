@@ -13,12 +13,15 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.jeong_woochang.fans.POJO.DrawerItem;
 import com.example.jeong_woochang.fans.R;
 import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+
+import okio.Utf8;
 
 /**
  * Created by jeong-woochang on 2018. 5. 16..
@@ -64,20 +67,20 @@ public class DrawerAdapter extends BaseAdapter {
         textView.setText(drawerItem.getName());*/
 
         System.out.println(drawerItem.getImg());
-        Picasso.with(context)
-                .load(drawerItem.getImg())
+        Glide.with(context)
+                .load(Uri.parse(drawerItem.getImg()).buildUpon().appendQueryParameter("key", "val").build().toString())
                 .into((ImageView) convertView.findViewById(R.id.group_img));
 
         System.out.println(drawerItem.getName());
-        Picasso.with(context)
-                .load(drawerItem.getName())
+        Glide.with(context)
+                .load(Uri.parse(drawerItem.getName()).buildUpon().appendQueryParameter("key", "val").build().toString())
                 .into((ImageView) convertView.findViewById(R.id.name));
 
         return convertView;
     }
 
     public void addItem(String name, String img) {
-        System.out.println("\""+name+"\""+","+"\""+img+"\"");
+        System.out.println("\"" + name + "\"" + "," + "\"" + img + "\"");
         DrawerItem item = new DrawerItem();
         item.setName(name);
         item.setImg(img);

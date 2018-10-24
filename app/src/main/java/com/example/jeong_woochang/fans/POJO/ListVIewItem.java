@@ -6,6 +6,7 @@ package com.example.jeong_woochang.fans.POJO;
 
 public class ListVIewItem {
     private String num;
+    private String[] sumnail;
     private String title;
     private String name;
     private String date;
@@ -18,6 +19,10 @@ public class ListVIewItem {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public void setSumnail(String[] sumnail) {
+        this.sumnail = sumnail;
     }
 
     public void setName(String name) {
@@ -36,10 +41,16 @@ public class ListVIewItem {
         this.href = href;
     }
 
-    public String getNum() { return num; }
+    public String getNum() {
+        return num;
+    }
 
     public String getTitle() {
         return title;
+    }
+
+    public String[] getSumnail() {
+        return sumnail;
     }
 
     public String getName() {

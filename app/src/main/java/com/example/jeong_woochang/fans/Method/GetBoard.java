@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.MediaRouteButton;
 import android.content.Context;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,9 +18,12 @@ import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.Source;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by jeong-woochang on 2018. 6. 21..
@@ -37,7 +41,7 @@ public class GetBoard {
             public void run() {
                 Source source;
                 try {
-                    String parsing_url="https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField="+search_field+"&SearchQuery="+search_query+"&Page="+page;
+                    String parsing_url = "https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField=" + search_field + "&SearchQuery=" + search_query + "&Page=" + page;
                     System.out.println(parsing_url);
                     URL url = new URL(parsing_url);
                     source = new Source(url);
@@ -125,19 +129,76 @@ public class GetBoard {
             }//run()
         };//Runnalble
 
-        final View rootView = ((Activity)context).getWindow().getDecorView().findViewById(android.R.id.content);
+        final View rootView = ((Activity) context).getWindow().getDecorView().findViewById(R.id.main);
 
         Thread thread = new Thread(runnable);
         try {
             thread.start();
             thread.join();
+            Thread thread1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Source source;
+                    try {
+                        String parsing_url = "https://fans.jype.com/BoardList?BoardName=" + board_name + "&SearchField=" + search_field + "&SearchQuery=" + search_query + "&Page=" + page;
+                        System.out.println(parsing_url);
+                        URL url = new URL(parsing_url);
+                        source = new Source(url);
+
+                        // date 가져오기
+
+                        //모든 TABLE 태그를 가져와 리스트에 담음
+                        List<Element> listTABLE = source.getAllElements(HTMLElementName.TABLE);
+                        //System.out.println(listTABLE.size());
+                        for (int i = 0; i < listTABLE.size(); i++) {
+                            Element TABLE = listTABLE.get(i);
+
+                            // TABLE태그의 id 값을 가져옴
+                            String TABLE_id = TABLE.getAttributeValue("id");
+                            if (TABLE_id != null) {
+
+                                // id 값이 MainContent_CenterContent_ctlBoardListPrivate 이면
+                                if (TABLE_id.equalsIgnoreCase("MainContent_CenterContent_ctlBoardListPrivate")) {
+
+                                    //TABLE태그의 id 값이 MainContent_CenterContent_ctlBoardListPrivate 인 Element에서 모든 TR태그를 가져옴
+                                    List<Element> listTR = TABLE.getAllElements(HTMLElementName.TR);
+
+                                    for (int j = 0; j < listTR.size(); j++) {
+
+                                        //모든 TR태크 중에서 j 번째 TR 태그를 가져옴
+                                        Element TR = listTR.get(j);
+
+                                        //j번째 TR태그에서 모든 TD태그를 가져옴
+                                        List<Element> listTD = TR.getAllElements(HTMLElementName.TD);
+
+                                        List<Element> listA = listTD.get(1).getAllElements(HTMLElementName.A);
+                                        Element A = listA.get(0);
+                                        href = A.getAttributeValue("href");
+
+                                        adapter.addSumnail(new GetSumnail().execute(href).get());
+                                    }//for 2
+                                }//if 2
+                            }//if 1
+                        }//for 1
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread1.start();
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     adapter.notifyDataSetChanged();
-                    ProgressBar progressBar=(ProgressBar)rootView.findViewById(R.id.progressbar);
+                    ProgressBar progressBar = (ProgressBar) rootView.findViewById(R.id.progressbar);
                     progressBar.setVisibility(View.GONE);
-                    ((MainActivity)context).setmLockListView(false);
+                    ((MainActivity) context).setmLockListView(false);
                 }
             }, 1000);
         } catch (Exception e) {

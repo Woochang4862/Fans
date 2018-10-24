@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 try {
+                    Log.d("######",String.valueOf(position));
                     Intent intent = new Intent(MainActivity.this, ContentActivity.class);
                     intent.putExtra("href", adapter.listViewItems.get(position).getHref());
                     startActivity(intent);

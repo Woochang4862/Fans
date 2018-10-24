@@ -1,6 +1,14 @@
 package com.example.jeong_woochang.fans.Adapter;
 
+import android.app.Activity;
 import android.content.Context;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +19,6 @@ import com.example.jeong_woochang.fans.POJO.ListVIewItem;
 import com.example.jeong_woochang.fans.R;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by jeong-woochang on 2018. 1. 24..
@@ -19,7 +26,8 @@ import java.util.List;
 
 public class ListViewAdapter extends BaseAdapter {
     //Adapter에 추가된 데이터를 저장하기 위한 ArrayList
-    public ArrayList<ListVIewItem> listViewItems=new ArrayList<ListVIewItem>();
+    public ArrayList<ListVIewItem> listViewItems = new ArrayList<ListVIewItem>();
+    public ArrayList<String[]> sumnails = new ArrayList<>();
 
     // ListViewAdapter의 생성자
     public ListViewAdapter() {
@@ -44,17 +52,19 @@ public class ListViewAdapter extends BaseAdapter {
         }
 
         // 화면에 표시될 View(Layout이 inflate된)으로부터 위젯에 대한 참조 획득
-        TextView numTextView = (TextView) convertView.findViewById(R.id.num) ;
-        TextView titleTextView = (TextView) convertView.findViewById(R.id.title) ;
-        TextView nameTextView = (TextView) convertView.findViewById(R.id.name) ;
-        TextView dateTextView = (TextView) convertView.findViewById(R.id.date) ;
-        TextView viewTextView = (TextView) convertView.findViewById(R.id.view) ;
+        TextView numTextView = (TextView) convertView.findViewById(R.id.num);
+        ViewPager sumbnails = (ViewPager) convertView.findViewById(R.id.sumbnails);
+        TextView titleTextView = (TextView) convertView.findViewById(R.id.title);
+        TextView nameTextView = (TextView) convertView.findViewById(R.id.name);
+        TextView dateTextView = (TextView) convertView.findViewById(R.id.date);
+        TextView viewTextView = (TextView) convertView.findViewById(R.id.view);
 
         // Data Set(listViewItemList)에서 position에 위치한 데이터 참조 획득
-        ListVIewItem listViewItem = listViewItems.get(position);
+        ListVIewItem listViewItem = listViewItems.get(pos);
 
         // 아이템 내 각 위젯에 데이터 반영
         numTextView.setText(listViewItem.getNum());
+        sumbnails.setAdapter(new ScreenSlidePagerAdapter(((FragmentActivity) context).getSupportFragmentManager()));
         titleTextView.setText(listViewItem.getTitle());
         nameTextView.setText(listViewItem.getName());
         dateTextView.setText(listViewItem.getDate());
@@ -88,9 +98,30 @@ public class ListViewAdapter extends BaseAdapter {
         item.setHref(href);
 
         listViewItems.add(item);
+
+    }
+
+    public void addSumnail(ArrayList<String> sumnail) {
+        sumnails.add(sumnail.toArray(new String[sumnail.size()]));
     }
 
     public void clear() {
         listViewItems.clear();
+    }
+
+    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+        public ScreenSlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return new SumnailFragment();
+        }
+
+        @Override
+        public int getCount() {
+            return sumnails.size();
+        }
     }
 }
