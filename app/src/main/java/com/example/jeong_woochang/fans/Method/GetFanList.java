@@ -1,16 +1,12 @@
 package com.example.jeong_woochang.fans.Method;
 
 import android.os.AsyncTask;
-import android.widget.Adapter;
 
 import com.example.jeong_woochang.fans.Adapter.DrawerAdapter;
-import com.example.jeong_woochang.fans.Adapter.ListViewAdapter;
-import com.example.jeong_woochang.fans.POJO.DrawerItem;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;

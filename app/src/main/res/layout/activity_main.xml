@@ -34,11 +34,11 @@
                 android:layout_height="match_parent"
                 android:layout_above="@id/progressbar">
 
-                <ListView
+                <android.support.v7.widget.RecyclerView
                     android:id="@+id/board"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:divider="@null"></ListView>
+                    android:divider="@null"></android.support.v7.widget.RecyclerView>
 
             </com.baoyz.widget.PullRefreshLayout>
 

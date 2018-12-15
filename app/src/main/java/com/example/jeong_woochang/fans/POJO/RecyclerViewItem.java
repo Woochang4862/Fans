@@ -1,12 +1,14 @@
 package com.example.jeong_woochang.fans.POJO;
 
+import java.util.ArrayList;
+
 /**
  * Created by jeong-woochang on 2018. 1. 24..
  */
 
-public class ListVIewItem {
+public class RecyclerViewItem {
     private String num;
-    private String[] sumnail;
+    private ArrayList<String> thumbnail;
     private String title;
     private String name;
     private String date;
@@ -21,8 +23,8 @@ public class ListVIewItem {
         this.title = title;
     }
 
-    public void setSumnail(String[] sumnail) {
-        this.sumnail = sumnail;
+    public void setThumbnail(ArrayList<String> thumbnail) {
+        this.thumbnail = thumbnail;
     }
 
     public void setName(String name) {
@@ -49,8 +51,8 @@ public class ListVIewItem {
         return title;
     }
 
-    public String[] getSumnail() {
-        return sumnail;
+    public ArrayList<String> getThumbnail() {
+        return thumbnail;
     }
 
     public String getName() {
@@ -67,5 +69,18 @@ public class ListVIewItem {
 
     public String getHref() {
         return href;
+    }
+
+    @Override
+    public String toString() {
+        return "RecyclerViewItem{" +
+                "num='" + num + '\'' +
+                ", thumbnail=" + thumbnail +
+                ", title='" + title + '\'' +
+                ", name='" + name + '\'' +
+                ", date='" + date + '\'' +
+                ", view='" + view + '\'' +
+                ", href='" + href + '\'' +
+                '}';
     }
 }
