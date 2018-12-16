@@ -79,17 +79,24 @@ public class DrawerAdapter extends BaseAdapter {
         return convertView;
     }
 
-    public void addItem(String name, String img) {
-        System.out.println("\"" + name + "\"" + "," + "\"" + img + "\"");
-        DrawerItem item = new DrawerItem();
-        item.setName(name);
-        item.setImg(img);
-        arrayList.add(item);
-        System.out.println(arrayList.size());
+    public void setArrayList(ArrayList<DrawerItem> arrayList){
+        this.arrayList=arrayList;
+
     }
 
     public void clear() {
         arrayList.clear();
     }
 
+    public String getBoardName(int pos) {
+        return arrayList.get(pos).getBoardName();
+    }
+
+    public int getBoardNumber(String board_name) {
+        for(DrawerItem item:arrayList){
+            if(item.getBoardName()==board_name)
+                return arrayList.indexOf(item);
+        }
+        return -1;
+    }
 }

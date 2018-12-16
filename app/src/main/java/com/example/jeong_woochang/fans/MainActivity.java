@@ -3,6 +3,7 @@ package com.example.jeong_woochang.fans;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -44,8 +45,6 @@ public class MainActivity extends AppCompatActivity {
     BoardRecyclerViewAdapter adapter;
     DrawerAdapter menu_list_adapter;
     ProgressBar progressBar;
-    private boolean lastItemVisibleFlag = false;
-    public boolean mLockListView = false;
     //Refresh를 위한 객체
     PullRefreshLayout layout;
     //Toolbar
@@ -73,16 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
         //ListView에 들어갈 항목 추가 및 Adapter 생성
         menu_list_adapter = new DrawerAdapter();
-        menu_list_adapter.clear();
-        try {
-            menu_list_adapter=new GetFanList().execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        //menu_list_adapter.addItem("https://jypfanscdn.azureedge.net/portal/dance-the-night-away_fan's_398x285.jpg","https://jypfanscdn.azureedge.net/portal/TW_fans-title(1).jpg");
-        menu_list_adapter.notifyDataSetChanged();
+        setMenuInBackground();
 
 
         //menu로 쓰일 ListView 객체 지정
@@ -92,14 +82,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                board_name = menu_list_adapter.arrayList.get(position).getName();
-                adapter.clear();
+                board_name = menu_list_adapter.getBoardName(position);
                 drawerLayout.closeDrawer(Gravity.LEFT);
                 if (checkNotiStatus(board_name))
                     fabAddNoti.setImageResource(R.drawable.ic_remove);
                 else
                     fabAddNoti.setImageResource(R.drawable.ic_add_alert);
-                adapter.addData(gb.getItem(MainActivity.this, board_name, page,search_query,search_field));
+                setBoardInBackground();
             }
         });
 
@@ -110,8 +99,7 @@ public class MainActivity extends AppCompatActivity {
         layout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                adapter.addData(gb.getItem(MainActivity.this, board_name, page, search_query, search_field));
-                adapter.notifyDataSetChanged();
+                setBoardInBackground();
                 //이게 없으면 무한 반복
                 layout.setRefreshing(false);
             }
@@ -144,27 +132,60 @@ public class MainActivity extends AppCompatActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         appData=getSharedPreferences("appData", MODE_PRIVATE);
 
-        getBoard_name(load());
-        adapter = new BoardRecyclerViewAdapter(gb.getItem(MainActivity.this, board_name, page,search_query,search_field));
-        // RecyclerView 참조 및 Adapter달기
+        board_name = load();
         board = findViewById(R.id.board);
-        board.setHasFixedSize(false);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        board.setLayoutManager(layoutManager);
-        adapter.SetOnItemClickListener(new BoardRecyclerViewAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-                Intent intent = new Intent(MainActivity.this, ContentActivity.class);
-                intent.putExtra("href", adapter.getHref(position));
-                startActivity(intent);
-            }
+        if(board_name!=null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    adapter = new BoardRecyclerViewAdapter(gb.getItem(MainActivity.this, board_name, page, search_query, search_field));
+                    final LinearLayoutManager layoutManager = new LinearLayoutManager(MainActivity.this);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // RecyclerView 참조 및 Adapter달기
+                            board.setHasFixedSize(false);
+                            board.setLayoutManager(layoutManager);
+                            adapter.SetOnItemClickListener(new BoardRecyclerViewAdapter.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(View view, int position) {
+                                    Intent intent = new Intent(MainActivity.this, ContentActivity.class);
+                                    intent.putExtra("href", adapter.getHref(position));
+                                    startActivity(intent);
+                                }
 
-            @Override
-            public void onItemLongClick(View view, int position) {
-                Toast.makeText(getApplicationContext(), "long click " + position, Toast.LENGTH_SHORT).show();
-            }
-        });
-        board.setAdapter(adapter);
+                                @Override
+                                public void onItemLongClick(View view, int position) {
+                                    Toast.makeText(getApplicationContext(), "long click " + position, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                            board.setAdapter(adapter);
+                        }
+                    });
+                }
+            }).start();
+        }
+        else {
+            //TODO:Tutorial Process
+            adapter = new BoardRecyclerViewAdapter();
+            final LinearLayoutManager layoutManager = new LinearLayoutManager(MainActivity.this);
+            board.setHasFixedSize(false);
+            board.setLayoutManager(layoutManager);
+            adapter.SetOnItemClickListener(new BoardRecyclerViewAdapter.OnItemClickListener() {
+                @Override
+                public void onItemClick(View view, int position) {
+                    Intent intent = new Intent(MainActivity.this, ContentActivity.class);
+                    intent.putExtra("href", adapter.getHref(position));
+                    startActivity(intent);
+                }
+
+                @Override
+                public void onItemLongClick(View view, int position) {
+                    Toast.makeText(getApplicationContext(), "long click " + position, Toast.LENGTH_SHORT).show();
+                }
+            });
+            board.setAdapter(adapter);
+        }
 
         fabStar = findViewById(R.id.star);
         fabAddNoti = findViewById(R.id.noti);
@@ -178,9 +199,21 @@ public class MainActivity extends AppCompatActivity {
         fabStar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                save(getBoardNumber(board_name));
-                Toast.makeText(MainActivity.this, "앞으로 시작화면에 바로 표시할게요", Toast.LENGTH_SHORT).show();
-                fam.close(true);
+                if(board_name==null){
+                    Snackbar.make(v, "시작 화면 등록 중 오류가 발생했습니다. 앱을 재실행 주세요.", Snackbar.LENGTH_LONG)
+                            .setAction("재실행", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    finish();
+                                }
+                            }).show();
+                    return;
+                }
+                else {
+                    save(board_name);
+                    Toast.makeText(MainActivity.this, "앞으로 시작화면에 바로 표시할게요", Toast.LENGTH_SHORT).show();
+                    fam.close(true);
+                }
             }
         });
         fabAddNoti.setOnClickListener(new View.OnClickListener() {
@@ -216,11 +249,11 @@ public class MainActivity extends AppCompatActivity {
         //Spinner Adapter
         ArrayAdapter<String> type_adapter;
         //검색 유형 및 Adapter 지정
-        search_type = new ArrayList<String>();
+        search_type = new ArrayList<>();
         search_type.add("제목");
         search_type.add("내용");
         search_type.add("닉네임");
-        type_adapter = new ArrayAdapter<String>(this, R.layout.spinner_item, search_type);
+        type_adapter = new ArrayAdapter<>(this, R.layout.spinner_item, search_type);
         search_type_spinner.setPrompt("유형");
         search_type_spinner.setAdapter(type_adapter);
 
@@ -229,6 +262,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(final String query) {
                 String search_field = null;
+                search_query=query;
                 switch (search_type_spinner.getSelectedItem().toString()) {
                     case "제목":
                         search_field = "Title";
@@ -240,9 +274,8 @@ public class MainActivity extends AppCompatActivity {
                         search_field = "Name";
                 }
                 page = "1";
-                adapter.clear();
-                adapter.addData(gb.getItem(MainActivity.this,board_name,page,query,search_field));
-                adapter.notifyDataSetChanged();
+                setSearch_field(search_field);
+                setBoardInBackground();
                 search_type_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -258,9 +291,8 @@ public class MainActivity extends AppCompatActivity {
                                 search_field = "Name";
                         }
                         page = "1";
-                        adapter.clear();
-                        adapter.addData(gb.getItem(MainActivity.this,board_name,page,query,search_field));
-                        adapter.notifyDataSetChanged();
+                        setSearch_field(search_field);
+                        setBoardInBackground();
                     }
 
                     @Override
@@ -280,129 +312,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 설정값을 저장하는 함수
-    private void save(final int setting_board_number) {
+    private void save(final String setting_board_name) {
         // SharedPreferences 객체만으론 저장 불가능 Editor 사용
         SharedPreferences.Editor editor = appData.edit();
 
         // 에디터객체.put타입( 저장시킬 이름, 저장시킬 값 )
-        editor.putInt("board_name", setting_board_number);
+        editor.putString("board_name", setting_board_name);
 
         // apply, commit 을 안하면 변경된 내용이 저장되지 않음
         editor.apply();
     }
 
     // 설정값을 불러오는 함수
-    private int load() {
+    private String load() {
         // SharedPreferences 객체.get타입( 저장된 이름, 기본값 )
         // 저장된 이름이 존재하지 않을 시 기본값
-        return  appData.getInt("board_name", -1);
-    }
-
-    private void getBoard_name(int n) {
-        switch (n) {
-            case 0: //2PM
-                board_name = "2PM_Notice";
-                setTitle("2PM");
-                break;
-            case 1: //GOT7
-                board_name = "GOT7_Notice";
-                setTitle("GOT7");
-                break;
-            case 2: //15&
-                board_name = "15and_notice";
-                setTitle("15&");
-                break;
-            case 3: //missA
-                board_name = "missA_notice";
-                setTitle("MissA");
-                break;
-            case 4: //Ayeon
-                board_name = "100ayeon_notice";
-                setTitle("Ayeon");
-                break;
-            case 5: //TWICE
-                board_name = "twice_notice";
-                setTitle("TWICE");
-                break;
-            case 6: //Day6
-                board_name = "DAY6_Notice";
-                setTitle("Day6");
-                break;
-            case 7: //NakJoon
-                board_name = "Notice_NakJoon";
-                setTitle("NakJoon");
-                break;
-            case 8: //J.Y.Park
-                board_name = "NOTICE_JYP";
-                setTitle("J.Y.Park");
-                break;
-            case 9: //Wonder Girls
-                board_name = "WonderGirls_Notice";
-                setTitle("Wonder Girls");
-                break;
-            case 10: //Suzy
-                board_name = "NOTICE_SUZY";
-                setTitle("Suzy");
-                break;
-            case 11: //Somi
-                board_name = "Notice_Somi";
-                setTitle("Somi");
-                break;
-            case 12: //StarKids
-                board_name = "NOTICE_SK";
-                setTitle("StarKids");
-                break;
-            default:
-                board_name="";
+        Object tmp;
+        try {
+            tmp = appData.getString("board_name", null);
+        }catch (Exception e){
+            appData.edit().clear().commit();
+            e.printStackTrace();
+            return null;
         }
-    }
-
-    private int getBoardNumber(final String board_name){
-        int result;
-        switch (board_name){
-            case "2PM_Notice":
-                result=0;
-                break;
-            case "GOT7_Notice":
-                result=1;
-                break;
-            case "15and_notice":
-                result=2;
-                break;
-            case "missA_notice":
-                result=3;
-                break;
-            case "100ayeon_notice":
-                result=4;
-                break;
-            case "twice_notice":
-                result=5;
-                break;
-            case "DAY6_Notice":
-                result=6;
-                break;
-            case "Notice_NakJoon":
-                result=7;
-                break;
-            case "NOTICE_JYP":
-                result=8;
-                break;
-            case "WonderGirls_Notice":
-                result=9;
-                break;
-            case "NOTICE_SUZY":
-                result=10;
-                break;
-            case "Notice_Somi":
-                result=11;
-                break;
-            case "NOTICE_SK":
-                result=12;
-                break;
-            default:
-                result=-1;
-        }
-        return result;
+        return (String) tmp;
     }
 
     private void notiOn(String setting_board_name) {
@@ -429,5 +362,47 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean checkNotiStatus(final String board_name){
         return appData.getBoolean(board_name, false);
+    }
+
+    private void setMenuInBackground(){
+        menu_list_adapter.clear();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    menu_list_adapter.setArrayList(new GetFanList().execute().get());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        menu_list_adapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void setBoardInBackground(){
+        adapter.clear();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.setmList(gb.getItem(MainActivity.this,board_name,page,search_query,search_field));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    public void setSearch_field(String search_field) {
+        this.search_field = search_field;
     }
 }

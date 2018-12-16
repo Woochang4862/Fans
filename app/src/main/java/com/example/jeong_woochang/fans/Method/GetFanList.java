@@ -3,6 +3,7 @@ package com.example.jeong_woochang.fans.Method;
 import android.os.AsyncTask;
 
 import com.example.jeong_woochang.fans.Adapter.DrawerAdapter;
+import com.example.jeong_woochang.fans.POJO.DrawerItem;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -18,14 +19,12 @@ import java.util.Map;
  * Created by jeong-woochang on 2018. 6. 21..
  */
 
-public class GetFanList extends AsyncTask<Void, Void, DrawerAdapter> {
+public class GetFanList extends AsyncTask<Void, Void, ArrayList<DrawerItem>> {
 
     @Override
-    protected DrawerAdapter doInBackground(Void... voids) {
-
-        DrawerAdapter menu_list_adapter=new DrawerAdapter();
+    protected ArrayList<DrawerItem> doInBackground(Void... voids) {
+        ArrayList<DrawerItem> tmp= new ArrayList<>();
         try {
-            ArrayList<String[]> tmp= new ArrayList<>();
             // 로그인 페이지 접속
             Connection.Response loginPageResponse = Jsoup.connect("https://fans.jype.com/Default")
                     .timeout(3000)
@@ -101,30 +100,25 @@ public class GetFanList extends AsyncTask<Void, Void, DrawerAdapter> {
                 String name= element1.attr("src");
                 element1 = element.select("img[class=img-responsive center-block]").get(1);
                 String img = element1.attr("src");
-                tmp.add(new String[]{name,img});
+                String fansName = element.select("a").first().attr("href");
+                tmp.add(new DrawerItem(img,name,fansName));
             }
-            System.out.println("SIZE:"+tmp.size());
-            for(int i=0;i<tmp.size();i++) {
-                menu_list_adapter.addItem(tmp.get(i)[0], tmp.get(i)[1]);
-            }
-            menu_list_adapter.notifyDataSetChanged();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            for(int i=0;i<tmp.size();i++) {
+                Connection.Response response = Jsoup.connect("https://fans.jype.com/" + tmp.get(i).getBoardName())
+                        .method(Connection.Method.GET)
+                        .execute();
 
-        return menu_list_adapter;
-    }
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
-    protected void onPostExecute(DrawerAdapter drawerAdapter) {super.onPostExecute(drawerAdapter);}
-
-    @Override
-    protected void onProgressUpdate(Void... values) {
-        super.onProgressUpdate(values);
+                Document source = response.parse();
+                String board_name = source.getElementById("MainContent_ctl00_divMainPageSummary").getElementById("MainContent_ctl00_lnkReadMore").attr("href").split("=")[1];
+                tmp.get(i).setBoardName(board_name);
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return tmp;
     }
 }

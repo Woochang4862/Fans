@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.example.jeong_woochang.fans.POJO.RecyclerViewItem;
+import com.example.jeong_woochang.fans.POJO.ParsingItem;
 import com.example.jeong_woochang.fans.R;
 
 import java.util.ArrayList;
@@ -19,12 +19,14 @@ import java.util.ArrayList;
  */
 
 public class BoardRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private ArrayList<RecyclerViewItem> mList;
+    private ArrayList<ParsingItem> mList;
     private SparseIntArray listPosition = new SparseIntArray();
     private BoardRecyclerViewAdapter.OnItemClickListener mItemClickListener;
     private Context mContext;
 
-    public BoardRecyclerViewAdapter(ArrayList<RecyclerViewItem> list) {
+    public BoardRecyclerViewAdapter(){mList=new ArrayList<>();}
+
+    public BoardRecyclerViewAdapter(ArrayList<ParsingItem> list) {
         this.mList = list;
     }
 
@@ -144,10 +146,13 @@ public class BoardRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
         notifyDataSetChanged();
     }
 
+    public void setmList(ArrayList<ParsingItem> list){
+        mList=list;
+    }
 
-    public void addData(ArrayList<RecyclerViewItem> item) {
+
+    public void addData(ArrayList<ParsingItem> item) {
         mList.addAll(item);
-        notifyDataSetChanged();
     }
 
     public interface OnItemClickListener {

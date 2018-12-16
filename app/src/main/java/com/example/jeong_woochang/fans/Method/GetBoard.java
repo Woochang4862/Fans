@@ -3,18 +3,15 @@ package com.example.jeong_woochang.fans.Method;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.jeong_woochang.fans.POJO.RecyclerViewItem;
+import com.example.jeong_woochang.fans.POJO.ParsingItem;
 
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.Source;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by jeong-woochang on 2018. 6. 21..
@@ -22,10 +19,10 @@ import java.util.concurrent.ExecutionException;
 
 public class GetBoard {
 
-    private ArrayList<RecyclerViewItem> mList=new ArrayList<>();
+    private ArrayList<ParsingItem> mList=new ArrayList<>();
 
     //게시판 파싱
-    public ArrayList<RecyclerViewItem> getItem(final Context context, final String board_name, final String page, final String search_query, final String search_field) {
+    public ArrayList<ParsingItem> getItem(final Context context, final String board_name, final String page, final String search_query, final String search_field) {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -62,7 +59,7 @@ public class GetBoard {
                                     //j번째 TR태그에서 모든 TD태그를 가져옴
                                     List<Element> listTD = TR.getAllElements(HTMLElementName.TD);
 
-                                    RecyclerViewItem item=new RecyclerViewItem();
+                                    ParsingItem item=new ParsingItem();
                                     for (int l = 0; l < listTD.size(); l++) {
 
                                         // 모근 TD태그 중에서 l 번째 TD 태그를 가져옴
@@ -123,9 +120,9 @@ public class GetBoard {
         }
     }
 
-    public String toString(ArrayList<RecyclerViewItem> list){
+    public String toString(ArrayList<ParsingItem> list){
         String results = "+";
-        for(RecyclerViewItem item : list) {
+        for(ParsingItem item : list) {
             results += item.toString() + ",";
         }
         return results;

@@ -5,8 +5,15 @@ package com.example.jeong_woochang.fans.POJO;
  */
 
 public class DrawerItem {
-    String img;
-    String name;
+    private String img;
+    private String name;
+    private String boardName;
+
+    public DrawerItem(String img, String name, String boardName) {
+        this.img = img;
+        this.name = name;
+        this.boardName = boardName;
+    }
 
     public String getImg() {
         return img;
@@ -22,5 +29,13 @@ public class DrawerItem {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBoardName() {
+        return boardName;
+    }
+
+    public void setBoardName(String boardName) {
+        this.boardName = boardName;
     }
 }
